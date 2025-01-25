@@ -1,0 +1,19 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    
+register
+
+{% endblock %}
+
+{% block body %}
+
+<h2>
+    {{ card.word }}
+</h2>
+<form action="/show_card" method = "post">
+    <a href="/show_card"><button>Answer</button></a>
+</form>
+
+
+{% endblock %}

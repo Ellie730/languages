@@ -1,0 +1,36 @@
+{% extends "layout.html"}
+
+{% block title %}
+
+show_card
+
+{% endblock %}
+
+{% block body %}
+
+<h2>
+    {{card.word}}
+</h2>
+<div>
+    {{word.definition}}
+</div>
+<div>
+    {{word.example}}
+</div>
+<div>
+    {{word.part}}
+</div>
+<div>
+    {{word.common}}
+</div>
+
+SORT THIS FORM OUT!!!
+<form action="/show_card" method="post">
+    <button name = "multiplier" value = 0>None</button>
+    <button name = "multiplier" value = 0.05>Some</button>
+    <button name = "multiplier" value = 1>Okay</button>
+    <button name = "multiplier" value = 2>Good</button>
+    <button name = "multiplier" value = 3>Easy</button>
+</form>
+
+{% endblock %}

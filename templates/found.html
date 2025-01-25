@@ -1,0 +1,22 @@
+{% extends "layout.html"}
+
+{% block title %}
+
+found
+
+{% endblock %}
+
+{% block body %}
+
+{% for deck in matching %}
+
+<div>
+    {{deck.id}}
+    {{deck.name}}
+    {{deck.medium}}
+    {{deck.genre}}
+    {{deck.author}}
+    {{deck.date}}
+</div>
+
+{% endfor %}

@@ -1,0 +1,65 @@
+{% extends "layout.html" %}
+
+{% block title %}
+deck
+{% endblock %}
+
+{% block body %}
+
+{% for card in cards %}
+
+<h3>{{card.word}}</h3>
+<div>
+    {{card.definition}}
+</div>
+<div>
+    {{card.example}}
+</div>
+<div>
+    {{card.part}}  {{card.common}}
+</div>
+<div>
+    due {{card.due}} last seen {{card.seen}}
+</div>
+<table>
+    <thead>
+        <tr>
+            <th>easy</th>
+            <th>good</th>
+            <th>ok</th>
+            <th>some</th>
+            <th>none</th>
+            <th>total</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>{{ card.easy }}</td>
+            <td>{{ card.good }}</td>
+            <td>{{ card.okay }}</td>
+            <td>{{ card.some }}</td>
+            <td>{{ card.none }}</td>
+            <td>{{ card.viewings }}</td>
+        </tr>
+    </tbody>
+</table>
+{% endfor %}
+
+{% if page != 0 %}
+
+<form action="/my_deck">
+    <input name="page" type="hidden" value="{{ page - 1 }}">
+    <button type="submit">back</button>
+</form>
+
+{% endif %}
+
+{% if page < pages %}
+
+<form action="/my_deck">
+    <input name="page" type="hidden" value="{{ page + 1 }}">
+    <button type="submit">back</button>
+</form>
+{% endif %}
+
+{% endblock %}
