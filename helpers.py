@@ -6,7 +6,7 @@ from datetime import date, time, datetime
 from flask import Flask, flash, redirect, render_template, request, session
 from functools import wraps
 from dictionary import get_definition
-import spacy
+import spaCy
 import sqlite3
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -46,11 +46,11 @@ def lemmatise(text, language):
     #load the correct 
     if language == "Italian":
         
-        nlp = spacy.load("it_core_news_sm")
+        nlp = spaCy.load("it_core_news_sm")
     
     if language == "Spanish":
 
-        nlp = spacy.load("es_core_news_sm")
+        nlp = spaCy.load("es_core_news_sm")
 
     doc = nlp(text)
 

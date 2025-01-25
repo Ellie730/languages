@@ -1,0 +1,5 @@
+{
+    "python.analysis.extraPaths": [
+        "./italian_dictionary-master/italian_dictionary-master/italian_dictionary"
+    ]
+}
