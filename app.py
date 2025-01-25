@@ -1,5 +1,5 @@
 import os
-import spacy
+import spaCy
 
 from datetime import date, time, datetime
 import sqlite3
@@ -143,7 +143,7 @@ def input():
             existing.append(created[word]["word"])
         
         #create a list of all words in this deck
-        db.execute("""SELECT card_id FROM deck_contents WHERE deck_id = ?""", (session["deck_id"],))
+        db.execute("""SELECT word_id FROM deck_contents WHERE deck_id = ?""", (session["deck_id"],))
         deck_words = db.fetchall()
         contents = []
         for word in deck_words:
@@ -281,7 +281,7 @@ def my_deck():
     order = db.fetchall()[0][0]
     db.execute (""" SELECT * from words
     JOIN user_progress ON words.id = user_progress.word_id
-    WHERE id IN (SELECT card_id FROM deck_contents WHERE deck_id = ?) AND user_id = ?
+    WHERE id IN (SELECT word_id FROM deck_contents WHERE deck_id = ?) AND user_id = ?
     ORDER BY ? LIMIT ?, 50""", (session["deck_id"], session["user_id"], order, 50*page))
     cards = db.fetchall()
     return render_template ("deck.html", cards = cards, page = page, pages=pages)
@@ -362,8 +362,8 @@ def review():
     if session[session["language"]]["new_seen"]/session["new_cards"] < session[session["language"]]["reviewed"]/session[session["language"]]["review_count"] and session[session["language"]]["new_seen"] < session["new_cards"]:
         db.execute ("""SELECT * FROM user_progress 
         JOIN words ON user_progress.word_id = words.id 
-        WHERE user_progress.user_id = ? AND user_progress.state = new AND card_id IN 
-        (SELECT card_id FROM deck_contents WHERE deck_id = ?)
+        WHERE user_progress.user_id = ? AND user_progress.state = new AND word_id IN 
+        (SELECT word_id FROM deck_contents WHERE deck_id = ?)
         ORDER BY ? LIMIT 1""", (session["user_id"], session["deck_id"], session["order"]))
         card = db.fetchall()
         session["state"] = "new"
@@ -510,34 +510,34 @@ def show_card():
         
         #update the specific viewing category
         if multiplier == 0:
-            db.execute("""UPDATE user_progress SET none = ? WHERE user_id = ? AND card_id = ?"""
+            db.execute("""UPDATE user_progress SET none = ? WHERE user_id = ? AND word_id = ?"""
             , (viewings["none"] + 1, session["user_id"], session["card"]))
         elif multiplier == 0.05:
-            db.execute("""UPDATE user_progress SET some = ? WHERE user_id = ? AND card_id = ?"""
+            db.execute("""UPDATE user_progress SET some = ? WHERE user_id = ? AND word_id = ?"""
             , (viewings["some"] + 1, session["user_id"], session["card"]))
         elif multiplier == 1:
-            db.execute("""UPDATE user_progress SET okay = ? WHERE user_id = ? AND card_id = ?"""
+            db.execute("""UPDATE user_progress SET okay = ? WHERE user_id = ? AND word_id = ?"""
             , (viewings["okay"] + 1, session["user_id"], session["card"]))
         elif multiplier == 2:
-            db.execute("""UPDATE user_progress SET good = ? WHERE user_id = ? AND card_id = ?"""
+            db.execute("""UPDATE user_progress SET good = ? WHERE user_id = ? AND word_id = ?"""
             , (viewings["good"] + 1, session["user_id"], session["card"]))
         elif multiplier == 3:
-            db.execute("""UPDATE user_progress SET easy = ? WHERE user_id = ? AND card_id = ?"""
+            db.execute("""UPDATE user_progress SET easy = ? WHERE user_id = ? AND word_id = ?"""
             , (viewings["easy"] + 1, session["user_id"], session["card"]))
         
         #if already seen, update state and the number of reviews
         if session["state"] == "review":
             if interval < 2500000:
-                db.execute ("""UPDATE user_progress SET state = learned WHERE user_id = ? AND card_id = ?"""
+                db.execute ("""UPDATE user_progress SET state = learned WHERE user_id = ? AND word_id = ?"""
                 , (session["user_id"], session["card"]))
             else:
-                db.execute("""UPDATE user_progress SET state = learning WHERE user_id = ? AND card_id = ?"""
+                db.execute("""UPDATE user_progress SET state = learning WHERE user_id = ? AND word_id = ?"""
                 , (session["user_id"], session["card"]))
             session[session["language"]]["reviewed"] += 1
         
         #if the card was new change state to learning, and count a new card seen
         else:
-            db.execute("""UPDATE user_progress SET state = learning WHERE user_id = ? AND card_id = ?"""
+            db.execute("""UPDATE user_progress SET state = learning WHERE user_id = ? AND word_id = ?"""
             , (session["user_id"], session["card"]))
             session[session["language"]]["new_seen"] +=1
         
@@ -546,8 +546,8 @@ def show_card():
 
     else:
 
-        db.execute("""SELECT * from cards JOIN user_progress ON user_progress.card_id = cards.id 
-        WHERE cards.id = ? and user_id = ?""", (session["card"], session["user_id"]))
+        db.execute("""SELECT * from words JOIN user_progress ON user_progress.word_id = words.id 
+        WHERE words.id = ? and user_id = ?""", (session["card"], session["user_id"]))
         card = db.fetchall()
         return render_template("show_card.html", card = card)
 
@@ -569,7 +569,7 @@ def uncommon():
             db.execute("""INSERT INTO user_progress (user_id, word_id, viewings, easy, good, ok, some, none, state, frequency) 
             VALUES (?,(SELECT id FROM words WHERE word = ? AND language = ? AND definition = ? and common = uncommon),0,0,0,0,0,0, new)""",
             (session["user_id"], session["uncommon"][0], session["language"], definition, session["uncommon_frequency"][0]))
-            db.execute ("""INSERT INTO deck_contents (deck_id, card_id, frequency) 
+            db.execute ("""INSERT INTO deck_contents (deck_id, word_id, frequency) 
             VALUES (?,(SELECT id FROM words WHERE word = ? AND language = ? AND definition = ? and common = uncommon),?)""", (session["deck_id"], session["uncommon"][0], session["language"], definition, session["uncommon_frequency"][0]))
 
         con.commit()
