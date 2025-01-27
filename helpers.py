@@ -1,14 +1,12 @@
-import os
+import spaCy
+import sqlite3
 
 from bs4 import BeautifulSoup
 from collections import Counter
-from datetime import date, time, datetime
-from flask import Flask, flash, redirect, render_template, request, session
+from datetime import date, datetime
+from italian_dictionary.dictionary import get_definition
+from flask import Flask, redirect, render_template, request, session
 from functools import wraps
-from dictionary import get_definition
-import spaCy
-import sqlite3
-from werkzeug.security import check_password_hash, generate_password_hash
 
 languages = ["German", "Italian", "Spanish"]
 

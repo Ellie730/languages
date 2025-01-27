@@ -1,9 +1,7 @@
-import os
-import spaCy
-
-from datetime import date, time, datetime
 import sqlite3
-from flask import Flask, flash, redirect, render_template, request, session
+
+from datetime import datetime
+from flask import Flask, redirect, render_template, request, session
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from helpers import apology, login_required, lookup, presence, update, lemmatise
@@ -13,8 +11,9 @@ app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
 session(app)
 
-con = sqlite3.connect("languagecards.db", check_same_thread=False)
-db = con.cursor()
+with app.app_context():  
+    con = sqlite3.connect("languagecards.db", check_same_thread=False)
+    db = con.cursor()
 
 @app.route("/")
 @login_required
@@ -100,8 +99,8 @@ def edit_deck():
         user_info = db.fetchall()
         db.execute("SELECT deck_id FROM decks WHERE name = ? AND creator_id = ?", (deck_info[0]["name"], session["user_id"]))
         edited_id = db.fetchall()
-        db.execute ("""INSERT INTO users_to_decks (user_id, deck_id, progress, order, weighted) VALUES (?,?,?,?,?)"""
-        , (session["user_id"], edited_id[0][0], user_info[0]["progress"], user_info[0]["order"], user_info[0]["weighted"]))
+        db.execute ("""INSERT INTO users_to_decks (user_id, deck_id, progress, position, weighted) VALUES (?,?,?,?,?)"""
+        , (session["user_id"], edited_id[0][0], user_info[0][2], user_info[0][3], user_info[0][4]))
         db.execute ("DELETE FROM users_to_decks WHERE user_id = ? AND deck_id = ?", (session["user_id"], deck))
         con.commit()
         session["deck_id"] = edited_id[0][0]
