@@ -1,5 +1,6 @@
 import sqlite3
 
+from collections import Counter
 from datetime import datetime
 from flask import Flask, redirect, render_template, request, session
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -9,7 +10,7 @@ from helpers import apology, login_required, lookup, presence, update, lemmatise
 app = Flask(__name__)
 app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
-session(app)
+app.secret_key = "plumbingfailure"
 
 with app.app_context():  
     con = sqlite3.connect("languagecards.db", check_same_thread=False)
@@ -27,6 +28,9 @@ def index():
     , (session["user_id"], session["language"]))
     decks = db.fetchall()
     for deck in decks:
+        if deck[7] is None:
+            db.execute ("UPDATE decks SET size=0 WHERE deck_id=?",(deck[0],))
+            con.commit()
         db.execute("""SELECT COUNT (*) FROM user_progress WHERE state = "learning" OR state = "learned" AND user_id = ? 
         AND word_id IN (SELECT word_id FROM deck_contents WHERE deck_id = ?)""",
         (session["user_id"], deck[9]))
@@ -44,7 +48,7 @@ def index():
         if weighted is None:
             weighted = 1
         db.execute("""UPDATE users_to_decks SET progress = ?, weighted = ? 
-        WHERE deck_id = ? AND user_id = ?""", (known/deck[8], weighted/frequency,deck[0], session["user_id"]))
+        WHERE deck_id = ? AND user_id = ?""", (known/int(deck[7]), weighted/frequency,deck[0], session["user_id"]))
         con.commit()
     db.execute ("SELECT deck_order FROM users WHERE id = ?",(session["user_id"],))
     order = db.fetchall()[0][0]
@@ -86,18 +90,18 @@ def edit_deck():
 
     # check if the current user is the creator of the deck 
     deck = request.form.get("deck_id")
-    db.execute ("SELECT creator_id FROM decks WHERE deck_id = ?", (deck,))
+    db.execute ("SELECT creator FROM decks WHERE deck_id = ?", (deck,))
     creator = db.fetchall()[0][0]
 
     #else make a new deck that contains the same info, to be edited
-    if session["user_id"] != creator:
+    if session["user_id"] != int(creator):
         db.execute ("SELECT * FROM decks WHERE deck_id = ?", (deck,))
         deck_info = db.fetchall()
-        db.execute ("""INSERT INTO decks (language, name, medium, genre, author, date, size, creator_id, public) values (?,?,?,?,?,?,?,?, private)"""
+        db.execute ("""INSERT INTO decks (language, name, medium, genre, author, date, size, creator, public) values (?,?,?,?,?,?,?,?, 'private')"""
         , (session["language"], deck_info[0][2], deck_info[0][5], deck_info[0][6], deck_info[0][3], deck_info[0][4], deck_info[0][7], session["user_id"]))
         db.execute("SELECT * FROM users_to_decks WHERE user_id = ? AND deck_id = ?", (session["user_id"], deck))
         user_info = db.fetchall()
-        db.execute("SELECT deck_id FROM decks WHERE name = ? AND creator_id = ?", (deck_info[0]["name"], session["user_id"]))
+        db.execute("SELECT deck_id FROM decks WHERE name = ? AND creator = ?", (deck_info[0][2], session["user_id"]))
         edited_id = db.fetchall()
         db.execute ("""INSERT INTO users_to_decks (user_id, deck_id, progress, position, weighted) VALUES (?,?,?,?,?)"""
         , (session["user_id"], edited_id[0][0], user_info[0][2], user_info[0][3], user_info[0][4]))
@@ -131,9 +135,9 @@ def input():
             text = request.form.get("input")
 
         # lemmatise each word and get a list of words and their frequencies
-        contents = lemmatise(text, session["language"])
+        lemmatised = lemmatise(text, session["language"])
+        contents = Counter(lemmatised)
 
-        return contents
         # create list of all words that have been created already 
         existing = []
         db.execute("SELECT * FROM words WHERE language = ? AND common = Common", (session["language"],))
@@ -144,9 +148,9 @@ def input():
         #create a list of all words in this deck
         db.execute("""SELECT word_id FROM deck_contents WHERE deck_id = ?""", (session["deck_id"],))
         deck_words = db.fetchall()
-        contents = []
+        deck_contents = []
         for word in deck_words:
-            contents.append(deck_words[word][0])
+            deck_contents.append(deck_words[word][0])
         
         #create a list of the user's words
         db.execute("""SELECT word_id FROM user_progress WHERE user_id = ? AND word_id IN (
@@ -161,13 +165,13 @@ def input():
 
         need_lookup = []
 
-        for word in contents:
+        for word in contents.keys():
             if word not in existing:
                 need_lookup.append(word)
+
+        session["need_lookup"] = need_lookup
         
-        values = lookup(need_lookup, session["language"])
-        
-        return values
+        values = create_card(need_lookup, session["language"])
         
         for word in values:
 
@@ -305,12 +309,17 @@ def new_deck():
         author = request.form.get("author")
         date = request.form.get("date")
         #use the decks table to enter this data
-        db.execute("INSERT INTO decks (language, name, medium, genre, author, date, creator_id) VALUES (?,?,?,?,?,?,?)"
+        db.execute("INSERT INTO decks (language, name, medium, genre, author, date, size, creator, public) VALUES (?,?,?,?,?,?,1,?, 'private')"
                    , (language, name, medium, genre, author, date, session["user_id"]))   
         con.commit()
         db.execute("SELECT deck_id FROM decks WHERE name = ?", (name,))
         session["deck_id"] = db.fetchall()[0][0]
-        db.execute("""INSERT INTO users_to_decks (user_id, deck_id) VALUES (?,?)""", (session["user_id"], session["deck_id"]))
+        try:
+            db.execute("SELECT position FROM users_to_decks ORDER BY position DESC LIMIT 1")
+            position = db.fetchall()[0][0] + 1
+        except IndexError:
+            position = 0
+        db.execute("""INSERT INTO users_to_decks (user_id, deck_id, position) VALUES (?,?,?)""", (session["user_id"], session["deck_id"], position))
         con.commit()
         return redirect ("/input")
 
@@ -341,7 +350,7 @@ def register():
         
         # input new user into database
         hash = generate_password_hash(password)
-        db.execute ("INSERT INTO users (username, hash) VALUES (?, ?)", (username, hash))
+        db.execute ("INSERT INTO users (username, hash, language) VALUES (?, ?, Italian)", (username, hash))
         con.commit()
         return redirect ("/")
 

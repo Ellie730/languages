@@ -1,11 +1,10 @@
-import spaCy
+import spacy
 import sqlite3
 
 from bs4 import BeautifulSoup
-from collections import Counter
 from datetime import date, datetime
 from italian_dictionary.dictionary import get_definition
-from flask import Flask, redirect, render_template, request, session
+from flask import redirect, render_template, session
 from functools import wraps
 
 languages = ["German", "Italian", "Spanish"]
@@ -44,16 +43,16 @@ def lemmatise(text, language):
     #load the correct 
     if language == "Italian":
         
-        nlp = spaCy.load("it_core_news_sm")
+        nlp = spacy.load("it_core_news_sm")
     
     if language == "Spanish":
 
-        nlp = spaCy.load("es_core_news_sm")
+        nlp = spacy.load("es_core_news_sm")
 
     doc = nlp(text)
 
     lemmas = [token.lemma_ for token in doc]
-    return Counter(lemmas)
+    return lemmas
 
 
     
