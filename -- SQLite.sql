@@ -1,2 +1,2 @@
 -- SQLite
-UPDATE users SET language = 'Italian';
+ALTER TABLE words ADD COLUMN creator INTEGER;

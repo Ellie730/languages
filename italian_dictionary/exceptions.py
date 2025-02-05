@@ -1,3 +1,0 @@
-class WordNotFoundError(Exception):
-    pass
-

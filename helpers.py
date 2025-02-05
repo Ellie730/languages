@@ -1,9 +1,7 @@
 import spacy
 import sqlite3
 
-from bs4 import BeautifulSoup
 from datetime import date, datetime
-from italian_dictionary.dictionary import get_definition
 from flask import redirect, render_template, session
 from functools import wraps
 
@@ -71,62 +69,6 @@ def login_required(f):
 
     return decorated_function
 
-
-
-def lookup(wordlist, language):
-
-    if language == "Italian":
-
-        #values is a list of dictionaries where each of the 
-        values = {}
-        for word in wordlist:
-
-            #use italian dictionary to get the word list
-            temp = get_definition(word)
-
-            values[word]["definition"] = temp["definizione"]
-            if not values[word]["definition"]:
-                session["uncommon"].append(word)
-            values[word]["part"] = temp["grammatica"]
-            return values
-
-    if language == "Spanish":
-
-        #this opens and stores the data from the dictionary xml file
-        with open("es-en.xml") as file:
-
-            data = file.read()
-        
-        #turn file into an xml file to parse
-        bs_data = BeautifulSoup(data, "xml")
-
-        #set a dictionary to store all of the collected values
-        values = {}
-
-        for word in wordlist:
-            
-            #find all the entries that match the word
-            matching = bs_data.find_all("w", string = word)
-            
-            #def list is the list of colleccted definitions for the word
-            def_list = (row.d.text for row in matching)
-            
-            #initialise a string to add all the definitions to
-            existing = ""
-            
-            #add each correct definition to this string
-            for i in range (len(def_list)):
-
-                existing += f"{ i + 1 }: {def_list[i]} \n"
-
-            #add the definition string and the word to a list
-            values[word]["definition"] = existing
-            if not values[word]["definition"]:
-                session["uncommon"].append(word)
-            values[word]["part"] = (matching[0].t.text).translate({ord(i) : None for i in '{}'})
-
-        return values
-                
 
 
 def presence(variable, vname):
