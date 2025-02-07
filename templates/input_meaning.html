@@ -1,4 +1,4 @@
-{% extends "layout.html"}
+{% extends "layout.html" %}
 
 {% block title %}
 
@@ -18,11 +18,13 @@ uncommon
         <label for="common">Common</label><br>
         <input type="radio" id="common" name="common" value="uncommon">
         <label for="uncommon">Uncommon</label><br>
+        <input type="radio" id="common" name="common" value="null">
+        <label for="null">Blacklist word</label><br>
     </div>
-    <input autocomplete="off" type="text" name="definition" value="definition">
-    <input autocomplete="off" type="text" name="frequency" value="frequency">
-    <input autocomplete="off" type="text" name="example" value="example">
-    <input autocomplete="off" type="text" name="part" value="part of speech">
+    <input autocomplete="off" type="text" name="definition" placeholder="definition">
+    <input autocomplete="off" type="text" name="frequency" placeholder="frequency">
+    <input autocomplete="off" type="text" name="example" placeholder="example">
+    <input autocomplete="off" type="text" name="part" placeholder="part of speech">
     <input type="submit" value="Submit">
 </form>
 

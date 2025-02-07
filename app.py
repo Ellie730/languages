@@ -140,17 +140,17 @@ def input():
 
         # create list of all words that have been created already 
         existing = []
-        db.execute("SELECT * FROM words WHERE language = ? AND (common = common OR creator = ?)", (session["language"], session["user_id"]))
+        db.execute("SELECT word FROM words WHERE language = ? AND (common = 'common' OR creator = ?)", (session["language"], session["user_id"]))
         created = db.fetchall()
         for word in created:
-            existing.append(created[word]["word"])
+            existing.append(word[0])
         
         #create a list of all words in this deck
         db.execute("""SELECT word_id FROM deck_contents WHERE deck_id = ?""", (session["deck_id"],))
         deck_words = db.fetchall()
         deck_contents = []
         for word in deck_words:
-            deck_contents.append(deck_words[word][0])
+            deck_contents.append(word[0])
         
         #create a list of the user's words
         db.execute("""SELECT word_id FROM user_progress WHERE user_id = ? AND word_id IN (
@@ -164,13 +164,14 @@ def input():
         session["uncommon"] = []
 
         need_lookup = []
+        nlfrequency = []
 
         for word in contents.keys():
             if word in existing:
 
                 # TODO: rework deck updates
                 # if the word is not in this deck, add it to the deck
-                db.execute ("SELECT id FROM words WHERE word = ? AND language = ? AND public = public", (contents[word], session["language"]))
+                db.execute ("SELECT id FROM words WHERE word = ? AND language = ? AND (common = 'common' OR common ='null')", (word, session["language"]))
                 word_id = db.fetchall()[0][0]
                 if word_id not in deck_contents:
                     db.execute("INSERT INTO deck_contents (deck_id, word_id, frequency) VALUES (?,?,?)", (session["deck_id"], word_id, contents[word]))
@@ -183,8 +184,8 @@ def input():
                 # add the card to user_progress or update frequency
                 if word_id not in user_words:
                     db.execute ("""INSERT INTO user_progress 
-                    (user_id, word_id, viewings, easy, good, ok, some, none, state, frequency) VALUES
-                    (?,?,0,0,0,0,0,0,new,?)""", (session["user_id"], word_id, contents[word]))
+                    (user_id, word_id, viewings, easy, good, okay, some, none, state, frequency) VALUES
+                    (?,?,0,0,0,0,0,0,'new',?)""", (session["user_id"], word_id, contents[word]))
                 else:
                     db.execute("""SELECT frequency FROM user_progress WHERE user_id = ? AND word_id = ?""",
                     (session["user_id"], word_id))
@@ -197,10 +198,14 @@ def input():
                 con.commit()
 
             else:
+                
+                
                 #if data cannot be found it is an uncommon word, store for later
                 need_lookup.append(word)
+                nlfrequency.append(contents[word])
 
         session["need_lookup"] = need_lookup
+        session["nlfrequency"] = nlfrequency
         session["key"]=0
 
         return redirect ("/input_meaning")
@@ -215,25 +220,31 @@ def input():
 def input_meaning():
 
     if request.method == "POST":
-        #if uncommon insert one way, no need to influence all the data set so much
+        #if card not needed, create a null card
         
         #get inputted data
         common = request.form.get("common")
-        definition = request.args.get("definition")
-        presence (definition, "definition")
-        frequency = request.args.get("frequency")
-        example = request.args.get("example")
-        part = request.args.get("part")
+        if common == "null":
+            db.execute("""INSERT INTO words (language, word, definition, frequency, example, part, common, creator)
+                        VALUES (?,?,'x',0,'x','x','null',?)""",(session["language"], session["need_lookup"][session["key"]], session["user_id"]))
+        else:
+            definition = request.form.get("definition")
+            presence (definition, "definition")
+            frequency = request.form.get("frequency")
+            example = request.form.get("example")
+            part = request.form.get("part")
 
-        #use inputted data to insert into correct tables
-        db.execute("""INSERT INTO words (language, word, definition, frequency, example, part, common, creator) 
-        VALUES (?,?,?,?,?,?,?)""", (session["language"], session["need_lookup"][session["key"]], definition, frequency, example, part, common, session["user_id"]))
-        db.execute("""INSERT INTO user_progress (user_id, word_id, viewings, easy, good, ok, some, none, state, frequency) 
-        VALUES (?,(SELECT id FROM words WHERE word = ? AND language = ? AND definition = ? and common = uncommon),0,0,0,0,0,0, new)""",
-        (session["user_id"], session["need_lookup"][session["key"]], session["language"], definition, session["uncommon_frequency"][0]))
-        db.execute ("""INSERT INTO deck_contents (deck_id, word_id, frequency) 
-        VALUES (?,(SELECT id FROM words WHERE word = ? AND language = ? AND definition = ? and common = uncommon),?)""", 
-        (session["deck_id"], session["need_lookup"][session["key"]], session["language"], definition, session["uncommon_frequency"][0]))
+            #use inputted data to insert into correct tables
+            db.execute("""INSERT INTO words (language, word, definition, frequency, example, part, common, creator) 
+            VALUES (?,?,?,?,?,?,?,?)""", (session["language"], session["need_lookup"][session["key"]], definition, frequency, example, part, common, session["user_id"]))
+            db.execute("SELECT id FROM words WHERE word = ? AND language = ? AND definition = ? and common = 'uncommon'", (session["need_lookup"][session["key"]], session["language"], definition))
+            new_word = db.fetchall()[0][0]
+            db.execute("""INSERT INTO user_progress (user_id, word_id, viewings, easy, good, ok, some, none, state, frequency) 
+            VALUES (?,?,0,0,0,0,0,0, new, ?)""",
+            (session["user_id"], new_word, session["nlfrequency"][session["key"]]))
+            db.execute ("""INSERT INTO deck_contents (deck_id, word_id, frequency) 
+            VALUES (?,(SELECT id FROM words WHERE word = ? AND language = ? AND definition = ? and common = uncommon),?)""", 
+            (session["deck_id"], session["need_lookup"][session["key"]], session["language"], definition, session["uncommon_frequency"][0]))
        
         con.commit()
         session["key"] += 1
