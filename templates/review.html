@@ -9,11 +9,61 @@ register
 {% block body %}
 
 <h2>
-    {{ card.word }}
+    {{ card.0.15 }}
 </h2>
-<form action="/show_card" method = "post">
-    <a href="/show_card"><button>Answer</button></a>
-</form>
 
+<button onclick="document.getElementById('sc').style.display='block'">Answer</button>
+
+<div id="sc" style="display:none">
+    <div>
+        {{alternate.0.2}}
+    </div>
+    <div>
+        {{alternate.0.3}}
+    </div>
+    <div>
+        {{alternate.0.4}}
+    </div>
+    <div>
+        {{alternate.0.5}}
+    </div>
+    
+    <form action="/review" method="post">
+        <input type="hidden" name = "multiplier" value = 0>
+        <button type="submit">None</button>
+    </form>
+    <form action="/review" method="post">
+        <input type="hidden" name = "multiplier" value = 0.05>
+        <button type="submit">Some</button>
+    </form>
+    <form action="/review" method="post">
+        <input type="hidden" name = "multiplier" value = 1>
+        <button type="submit">Okay</button>
+    </form>
+    <form action="/review" method="post">
+        <input type="hidden" name = "multiplier" value = 2>
+        <button type="submit">Good</button>
+    </form>
+    <form action="/review" method="post">
+        <input type="hidden" name = "multiplier" value = 3>
+        <button type="submit">Easy</button>
+    </form>
+    {% if session["state"] == "new" %}
+    <form action="/review" method="post">
+        <input type="hidden" name = "multiplier" value="known">
+        <button type="submit">Mark as Known</button>
+    </form>
+    <form action="/review" method="post">
+        <input type="hidden" name = "multiplier" value="blacklist">
+        <button type="submit">Blacklist</button>
+    </form>
+    {% endif %}
+</div>
+<div>
+    <form action="/new_alternate" method="get">
+        <input type="hidden" name="route" value="review">
+        <button type="submit">NEW ALTERNATE</button>
+    </form>
+</div>
 
 {% endblock %}

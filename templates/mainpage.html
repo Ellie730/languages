@@ -22,6 +22,7 @@ mainpage
             <th>public or private</th>
             <th>edit deck</th>
             <th>view contents</th>
+            <th>change order</th>
         </tr>
     </thead>
     <tbody>
@@ -58,20 +59,36 @@ mainpage
                     <button type="submit">View</button>
                 </form>     
             </td>
-            </tr>
-            <script>
-                
-                function changeStatus() {
-                    var deck = $('#deck_id').data().value;
-                    $.ajax({
-                        url: "/change_status",
-                        type: "POST",
-                        data: { "deck_id":deck }
-
-                    })
-                }
-
-            </script>
+            <td>
+                {% if display.index(row) > 0 %}
+                    <div>
+                        <form action="/reorder" method="post">
+                            <input name="deck" type="hidden" value="{{ row.0 }}">
+                            <input name="direction" type="hidden" value="-">
+                            <button type="submit">&#x2191</button>
+                        </form>
+                        <form action="/reorder" method="post">
+                            <input name="deck" type="hidden" value="{{ row.0 }}">
+                            <input name="direction" type="hidden" value="first">
+                            <button type="submit">&#x219F</button>
+                        </form>
+                    </div>
+                {% endif %}
+                {% if display.index(row) < count %}
+                    <div>
+                        <form action="/reorder" method="post">
+                            <input name="deck" type="hidden" value="{{ row.0 }}">
+                            <input name="direction" type="hidden" value="+">
+                            <button type="submit">&#x2193</button>
+                        </form>
+                        <form action="/reorder" method="post">
+                            <input name="deck" type="hidden" value="{{ row.0 }}">
+                            <input name="direction" type="hidden" value="last">
+                            <button type="submit">&#x21A1</button>
+                        </form>
+                    </div>
+                {% endif %}
+            </td>
         </tr>
         {% endfor %}
     </tbody>

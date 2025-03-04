@@ -26,10 +26,12 @@
                      {% if session["user_id"] %}
                         <ul class="navbar-nav me-auto mt-2">
                             <li class="nav_item dropdown">
-                                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                     {{ session["language"] }}
                                 </a>
                                 <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                    <a class="dropdown_item" href="/change_language?language=Finnish">Finnish</a>
+                                    <a class="dropdown_item" href="/change_language?language=French">French</a>
                                     <a class="dropdown_item" href="/change_language?language=German">German</a>
                                     <a class="dropdown_item" href="/change_language?language=Italian">Italian</a>
                                     <a class="dropdown_item" href="/change_language?language=Spanish">Spanish</a>
@@ -38,6 +40,9 @@
                             <li class="nav_item"><a class="nav-link" href="/search_decks">Search for deck</a></li>
                             <li class="nav_item"><a class="nav-link" href="/new_deck">Create new deck</a></li>
                             <li class="nav_item"><a class="nav-link" href="/review">Review Cards</a></li>
+                            <li class="nav_item"><a class="nav-link" href="/settings">Settings</a></li>
+                            <li class="nav_item"><a class="nav-link" href="/view_blacklist">View Blacklist</a></li>
+                            <li class="nav_item"><a class="nav-link" href="/logout">Logout</a></li>
                         </ul>
                      {% else %}
                         <ul class="navbar-nav ms-auto mt-2">

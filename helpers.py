@@ -5,7 +5,7 @@ from datetime import date, datetime
 from flask import redirect, render_template, session
 from functools import wraps
 
-languages = ["German", "Italian", "Spanish"]
+languages = ["Finnish", "French", "German", "Italian", "Spanish"]
 
 con = sqlite3.connect("languagecards.db", check_same_thread=False)
 db = con.cursor()
@@ -39,6 +39,19 @@ def apology(message, code=400):
 def lemmatise(text, language):
 
     #load the correct 
+
+    if language == "Finnish":
+        
+        nlp = spacy.load("fi_core_news_sm")
+
+    if language == "French":
+
+        nlp = spacy.loag("fi_core_news_fr")
+
+    if language == "German":
+
+        nlp = spacy.load("de_core_news_sm")
+
     if language == "Italian":
         
         nlp = spacy.load("it_core_news_sm")
@@ -82,27 +95,43 @@ def presence(variable, vname):
 
 
 def update():
-        #if new day reset new card counter
-    db.execute ("SELECT time FROM users WHERE id = ?", (session["user_id"],))
-    try:
-        last = date(db.fetchall()[0][0])
-    except TypeError:
-        last = 0
     
+    #if new day reset new card counter
+    db.execute ("SELECT time FROM users WHERE id = ?", (session["user_id"],))
+    data = int(float(db.fetchall()[0][0]))
+    last = date.fromtimestamp(data)
+
     session["datetime"] = datetime.now().timestamp()
-    if last != date.today():
+    today = date.today()
+    if last != today:
+        db.execute("""UPDATE users SET time = ? WHERE id = ?""", (session["datetime"], session["user_id"]))
         for language in languages:
-            session.update({f"{language}":{"new_seen":0, "reviewed":0}})
+            session[language]["new_seen"]=0
+            session.modified = True
+            session[language]["reviewed"]=0
+            session.modified = True
         
     #find the number of cards to review
-    db.execute("""SELECT COUNT (*) FROM user_progress
-    WHERE due < ? AND user_id = ? AND word_id IN 
-    (SELECT id FROM words WHERE language = ?)"""
-    , (session["datetime"], session["user_id"], session["language"]))
-    session[session["language"]]["review_count"] = db.fetchall()
+    db.execute("""SELECT COUNT(*) FROM user_progress
+        WHERE due < ? AND user_id = ? AND word_id IN 
+        (SELECT id FROM words WHERE language = ?)"""
+        , (float(session["datetime"]), session["user_id"], session["language"]))
+    temp = db.fetchall()[0][0]
+
+   
+    session[session["language"]]["review_count"] = temp
+    session.modified = True
+    
+    if session[session["language"]]["review_count"] == 0:
+        session[session["language"]]["review_count"] = 1
+    
+    db.execute("""UPDATE users SET german_ns = ?, italian_ns = ?, spanish_ns = ?, finnish_ns = ?, french_ns = ? WHERE id = ?""", 
+               (session["German"]["new_seen"], session["Italian"]["new_seen"], session["Spanish"]["new_seen"], session["Finnish"]["new_seen"], session["French"]["new_seen"], session["user_id"]))
+
     db.execute("SELECT * FROM users WHERE id = ?", (session["user_id"],))
-    session["new_cards"] = db.fetchall()[0][5]
+    settings = db.fetchall()[0]
+    session["new_cards"] = int(settings[5])
+    session["order"] = settings[4]
     #update the time in the database
     db.execute("""UPDATE users SET time = ? WHERE id = ?""", (session["datetime"], session["user_id"]))
     con.commit()
-    
