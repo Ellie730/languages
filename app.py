@@ -7,7 +7,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 from helpers import apology, login_required, presence, update, lemmatise
 
-languages = ["German", "Italian", "Spanish", "Finnish", "French",]
+languages = ["German", "Italian", "Spanish", "Finnish", "French"]
 
 app = Flask(__name__)
 app.config["SESSION_PERMANENT"] = False
@@ -110,11 +110,33 @@ def add_deck():
 @app.route("/blacklist", methods=["POST"])
 @login_required
 def blacklist():
-    creator = request.form.get("creator")
-    db.execute("""INSERT INTO blacklist (user_id, creator) VALUES (?, ?)""", (session["user_id"], creator))
-    db.execute("""UPDATE user_progress SET alternate = NULL WHERE user_id = ? AND word_id IN (SELECT original FROM alternates WHERE creator = ?)""", (session["user_id"], creator))
-    con.commit()
-    return redirect ("/review")
+
+    source = request.form.get("confirmed")
+    if source == "0":
+        
+        #if confirmed, create entry to balcklist the person
+        db.execute("""INSERT INTO blacklist (user_id, creator) VALUES (?, ?)""", (session["user_id"], session["creator"]))
+        db.execute("""UPDATE user_progress SET alternate = NULL WHERE user_id = ? 
+                   AND word_id IN (SELECT original FROM alternates WHERE creator = ?)""", 
+                   (session["user_id"], session["creator"]))
+        con.commit()
+        return redirect ("/review")
+    
+    else:
+
+        # get the information needed for the user to decide whether to blacklist this creator
+        session["creator"] = request.form.get("creator")
+        if session["creator"] == session["user_id"]:
+            return render_template ("blacklist_failed.html")
+        
+        db.execute("""SELECT COUNT (*) FROM alternates 
+                   JOIN user_progress ON user_progress.word_id = alternates.original
+                   WHERE user_id = ? AND alternates.alternate = user_progress.alternate AND alternates.creator = ?""",
+                   (session["user_id"], session["creator"]))
+        count = db.fetchall()[0][0]
+        db.execute("""SELECT username FROM users WHERE id = ?""", (session["creator"],))
+        creator = db.fetchall()[0][0]
+        return render_template ("confirm_blacklist.html", count = count, creator = creator)
 
 
 
@@ -144,6 +166,28 @@ def change_status():
 
 
 
+@app.route("/choose_alternate", methods=["GET", "POST"])
+@login_required
+def choose_alternate():
+
+    if request.method == "POST":
+    #get the values of the selected alternate from the last 
+        alt = request.form.get("choice")
+
+        #insert into the database
+        db.execute("""UPDATE user_progress SET alternate = ? WHERE user_id = ? AND word_id = ?""", (alt, session["user_id"], session["card"]))
+        con.commit()
+        return redirect ("/review")
+    else:
+
+        db.execute("""SELECT word FROM words WHERE id = ?""", (session["card"],))
+        card = db.fetchall()[0][0]
+        db.execute("SELECT * FROM alternates WHERE original = ? AND NOT creator IN (SELECT creator FROM blacklist WHERE user_id = ?)", (session["card"], session["user_id"]))
+        alternates = db.fetchall()
+        return render_template ("choose_alternate.html", card = card, alternates = alternates)
+
+
+
 @app.route("/custom_study", methods=["POST"])
 @login_required
 def custom_study():
@@ -168,23 +212,25 @@ def edit_deck():
     creator = db.fetchall()[0][0]
 
     #else make a new deck that contains the same info, to be edited
-    if session["user_id"] != int(creator):
-        db.execute ("SELECT * FROM decks WHERE deck_id = ?", (deck,))
-        deck_info = db.fetchall()
-        db.execute ("""INSERT INTO decks (language, name, medium, genre, author, date, size, creator, public) values (?,?,?,?,?,?,?,?, 'private')"""
-        , (session["language"], deck_info[0][2], deck_info[0][5], deck_info[0][6], deck_info[0][3], deck_info[0][4], deck_info[0][7], session["user_id"]))
-        db.execute("SELECT * FROM users_to_decks WHERE user_id = ? AND deck_id = ?", (session["user_id"], deck))
-        user_info = db.fetchall()
-        db.execute("SELECT deck_id FROM decks WHERE name = ? AND creator = ?", (deck_info[0][2], session["user_id"]))
-        edited_id = db.fetchall()
-        db.execute ("""INSERT INTO users_to_decks (user_id, deck_id, progress, position, weighted) VALUES (?,?,?,?,?)"""
-        , (session["user_id"], edited_id[0][0], user_info[0][2], user_info[0][3], user_info[0][4]))
-        db.execute ("DELETE FROM users_to_decks WHERE user_id = ? AND deck_id = ?", (session["user_id"], deck))
-        con.commit()
-        session["deck_id"] = edited_id[0][0]
-
-    else:
-        session["deck_id"] = deck
+    db.execute ("SELECT * FROM decks WHERE deck_id = ?", (deck,))
+    deck_info = db.fetchall()
+    db.execute ("""INSERT INTO decks (language, name, medium, genre, author, date, size, creator, public) values (?,?,?,?,?,?,?,?, 'private')"""
+    , (session["language"], deck_info[0][2], deck_info[0][5], deck_info[0][6], deck_info[0][3], deck_info[0][4], deck_info[0][7], session["user_id"]))
+    db.execute("SELECT * FROM users_to_decks WHERE user_id = ? AND deck_id = ?", (session["user_id"], deck))
+    user_info = db.fetchall()
+    db.execute("SELECT deck_id FROM decks WHERE name = ? AND creator = ?", (deck_info[0][2], session["user_id"]))
+    temp = db.fetchall()
+    edited_id = temp[len(temp) - 1][0]
+    db.execute ("""INSERT INTO users_to_decks (user_id, deck_id, progress, position, weighted) VALUES (?,?,?,?,?)"""
+    , (session["user_id"], edited_id, user_info[0][2], user_info[0][3], user_info[0][4]))
+    db.execute ("DELETE FROM users_to_decks WHERE user_id = ? AND deck_id = ?", (session["user_id"], deck))
+    #copy cards from old deck into new
+    db.execute("""INSERT INTO temp (deck_id, word_id, frequency) SELECT deck_id, word_id, frequency FROM deck_contents WHERE deck_id = ?""", (deck,))
+    db.execute("""UPDATE temp SET deck_id = ?""", (edited_id,))
+    db.execute("""INSERT INTO deck_contents (deck_id, word_id, frequency) SELECT deck_id, word_id, frequency FROM temp""")
+    db.execute("""DELETE FROM temp""")
+    con.commit()
+    session["deck_id"] = edited_id
     
     return redirect ("/input")
 
@@ -304,6 +350,7 @@ def login():
         session["language"] = rows[0][3]
         session["order"] = rows[0][4]
         session["card"] = ''
+        session["creator"] = ''
         session["deck_id"] =''
         session["datetime"] =''
         session["route"] =''
@@ -351,7 +398,7 @@ def my_deck():
     JOIN user_progress ON words.id = user_progress.word_id
     JOIN alternates ON alternates.original = words.id
     WHERE id IN (SELECT word_id FROM deck_contents WHERE deck_id = ?) AND user_id = ?
-    AND alternates.alternate == user_progress.alternate
+    AND alternates.alternate = user_progress.alternate
     ORDER BY ? LIMIT ?, 50""", (session["deck_id"], session["user_id"], order, 50*page))
     cards = db.fetchall()
     return render_template ("deck.html", cards = cards, page = page, pages=pages)
@@ -366,22 +413,8 @@ def new_alternate():
     
         db.execute("""SELECT COUNT(*) FROM alternates WHERE original = ?""", (session["card"],))
         alt_count = db.fetchall()[0][0]
-        #get inputted data
-        common = request.form.get("common")
-        if common == "blacklisted":
-            db.execute("""INSERT INTO alternates (original, alternate, definition, part) VALUES (?,?,'x','x')"""
-                        , (session["card"], alt_count))
-            db.execute("""UPDATE user_progress SET state = 'blacklisted', alternate = ? WHERE user_id = ? AND word_id = ?"""
-                        , (alt_count, session["user_id"], session["card"]))
-            con.commit()
 
-            if session["route"] == 0:
-                return redirect("/review")
-            else:
-                return redirect("/my_deck")
-
-        if not common:
-            common = "common"
+        #get inputted data       
         
         definition = request.form.get("definition")
         presence (definition, "definition")
@@ -398,22 +431,36 @@ def new_alternate():
                 interval = db.fetchall()[0][0]
 
         #use inputted data to insert into correct tables
-        db.execute("""INSERT INTO alternates (definition, frequency, example, part, creator, original, alternate) VALUES (?,?,?,?,?,?,?)""", 
-                    (definition, frequency, example, part, session["user_id"], session["card"], alt_count))
-        if interval == "known":
-            db.execute("""UPDATE user_progress SET state = 'known' WHERE user_id = ? AND word_id = ?""", 
-                        (session["user_id"], session["card"]))
+        if interval == "blacklist":
+            db.execute("""INSERT INTO alternates (original, alternate, definition, part) VALUES (?,?,'x','x')"""
+                        , (session["card"], alt_count))
+            db.execute("""UPDATE user_progress SET state = 'blacklisted', alternate = ? WHERE user_id = ? AND word_id = ?"""
+                        , (alt_count, session["user_id"], session["card"]))
+            con.commit()
+
+            if session["route"] == 0:
+                return redirect("/review")
+            else:
+                return redirect("/my_deck")
+            
         else:
-            db.execute("""UPDATE user_progress SET interval = ?, due = ?, state = 'learning', alternate = ? WHERE user_id = ? AND word_id = ?""",
-                        (interval, int(datetime.now().timestamp()) + int(interval), alt_count, session["user_id"], session["card"]))
-            session[session["language"]]["new_seen"] += 1
-            session.modified = True
-        
-        con.commit()
-        if session["route"] == 0:
-            return redirect("/review")
-        else:
-            return redirect("/my_deck")
+            db.execute("""INSERT INTO alternates (definition, frequency, example, part, creator, original, alternate) VALUES (?,?,?,?,?,?,?)""", 
+                        (definition, frequency, example, part, session["user_id"], session["card"], alt_count))
+            if interval == "known":
+                db.execute("""UPDATE user_progress SET state = 'known' WHERE user_id = ? AND word_id = ?""", 
+                            (session["user_id"], session["card"]))
+                
+            else:
+                db.execute("""UPDATE user_progress SET interval = ?, due = ?, state = 'learning', alternate = ? WHERE user_id = ? AND word_id = ?""",
+                            (interval, int(datetime.now().timestamp()) + int(interval), alt_count, session["user_id"], session["card"]))
+                session[session["language"]]["new_seen"] += 1
+                session.modified = True
+            
+            con.commit()
+            if session["route"] == 0:
+                return redirect("/review")
+            else:
+                return redirect("/my_deck")
 
     else:
         #pick the next word that hasn't been dealt with
@@ -454,7 +501,7 @@ def new_deck():
         db.execute("SELECT deck_id FROM decks WHERE name = ?", (name,))
         session["deck_id"] = db.fetchall()[0][0]
         try:
-            db.execute("SELECT position FROM users_to_decks ORDER BY position DESC LIMIT 1")
+            db.execute("SELECT position FROM users_to_decks WHERE user_id = ? ORDER BY position DESC LIMIT 1", (session["user_id"],))
             position = db.fetchall()[0][0] + 1
         except IndexError:
             position = 0
@@ -489,7 +536,7 @@ def register():
         
         # input new user into database
         hash = generate_password_hash(password)
-        db.execute ("INSERT INTO users (username, hash, language, new_cards, german_ns, italian_ns, spanish_ns, time) VALUES (?, ?, 'Italian', 20, 0, 0, 0, 0)", (username, hash))
+        db.execute ("INSERT INTO users (username, hash, language, new_cards, finnish_ns, french_ns, german_ns, italian_ns, spanish_ns, time, card_order) VALUES (?, ?, 'Italian', 20, 0, 0, 0, 0, 0, 0, 'words.id')", (username, hash))
         con.commit()
         return redirect ("/")
 
@@ -631,7 +678,7 @@ def review():
         
         #if the card was new change state to learning, and count a new card seen
         else:
-            db.execute("""UPDATE user_progress SET state = learning WHERE user_id = ? AND word_id = ?"""
+            db.execute("""UPDATE user_progress SET state = 'learning' WHERE user_id = ? AND word_id = ?"""
             , (session["user_id"], session["card"]))
             session[session["language"]]["new_seen"] +=1
             session.modified = True
@@ -651,28 +698,6 @@ def review():
                         ORDER BY {session["order"]} LIMIT 1""", (session["user_id"], session["deck_id"], session["language"]))
             card = db.fetchall()
             session["state"] = "new"
-            session["card"] = card[0][1]
-
-            #find out how many versions of the card there are
-            db.execute ("""SELECT COUNT(*) FROM alternates WHERE original = ? AND NOT creator IN (SELECT creator FROM blacklist WHERE user_id = ?)""", (session["card"], session["user_id"]))
-            alt_count = db.fetchall()[0][0]
-
-            # if none then one must be created
-            if alt_count == 0:
-                return redirect ("/new_alternate")
-            
-            # if more than one, must be chosen
-            if alt_count > 1:
-                db.execute("SELECT * FROM alternates WHERE original = ? AND alternate = (SELECT alternate FROM user_progress WHERE user_id = ? and word_id = ?)", (session["card"], session["user_id"], session["card"]))
-                alternates = db.fetchall()
-                return render_template ("choose_alternate.html", card = card, alternates = alternates)
-            
-            else:
-                db.execute ("""SELECT * FROM alternates WHERE original = ? AND NOT creator IN 
-                            (SELECT creator FROM blacklist WHERE user_id = ?)""", (card[0][1], session["user_id"]))
-                alternate = db.fetchall()
-                db.execute ("""UPDATE user_progress SET alternate = ? WHERE user_id = ? AND word_id = ?""", (alternate[0][1], session["user_id"], session["card"]))
-                con.commit()
 
         #if possible, choose the longest overdue card with interval < 1 hr
         else:
@@ -705,11 +730,12 @@ def review():
         if not card:
             return render_template ("end_review.html", count = session[session["language"]]["reviewed"], new = session[session["language"]]["new_seen"])
 
+        #see if there is already an alternate assigned for this person and word, if so get the data
         session["card"]= card[0][1]
         db.execute("""SELECT * FROM alternates WHERE original = ? AND alternate = 
                 (SELECT alternate FROM user_progress WHERE user_id = ? AND word_id = ?)""", (card[0][1], session["user_id"], card[0][1]))
         alternate = db.fetchall()
-        #find out how many versions of the card there are
+        #if not assigned find out how many valid alternates there are
         if len(alternate) == 0:
             db.execute ("""SELECT COUNT(*) FROM alternates WHERE original = ? AND NOT creator IN (SELECT creator FROM blacklist WHERE user_id = ?)""",
                          (session["card"], session["user_id"]))
@@ -721,9 +747,7 @@ def review():
             
             # if more than one, must be chosen
             if alt_count > 1:
-                db.execute("SELECT * FROM alternates WHERE original = ? AND alternate = (SELECT alternate FROM user_progress WHERE user_id = ? and word_id = ?)", (session["card"], session["user_id"], session["card"]))
-                alternates = db.fetchall()
-                return render_template ("choose_alternate.html", card = card, alternates = alternates)
+                return redirect ("/choose_alternate")
             
             else:
                 db.execute ("""SELECT * FROM alternates WHERE original = ? AND NOT creator IN 
@@ -776,10 +800,13 @@ def settings ():
             db.execute ("UPDATE users SET card_order = ? WHERE id = ?", (card_order, session["user_id"]))
             
         #update number of new cards
-        new_cards = int(request.form.get ("new_cards"))
-        if new_cards:
+        try:
+            new_cards = int(request.form.get ("new_cards"))
             session["new_cards"] = new_cards
             db.execute ("UPDATE users SET new_cards = ? WHERE id = ?", (new_cards, session["user_id"]))
+        except ValueError:
+            a = 1
+            del a
 
         con.commit()
         return redirect("/")
@@ -804,7 +831,7 @@ def view_blacklist():
 
         db.execute ("""SELECT id, username FROM users WHERE id IN (SELECT creator FROM blacklist WHERE user_id = ?)""", (session["user_id"],)) 
         blacklist = db.fetchall()
-        return render_template ("blacklist.html")
+        return render_template ("blacklist.html", blacklist = blacklist)
 
 @app.route("/view_deck", methods=["POST"])
 @login_required

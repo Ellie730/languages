@@ -27,42 +27,57 @@ register
     <div>
         {{alternate.0.5}}
     </div>
-    
-    <form action="/review" method="post">
-        <input type="hidden" name = "multiplier" value = 0>
-        <button type="submit">None</button>
-    </form>
-    <form action="/review" method="post">
-        <input type="hidden" name = "multiplier" value = 0.05>
-        <button type="submit">Some</button>
-    </form>
-    <form action="/review" method="post">
-        <input type="hidden" name = "multiplier" value = 1>
-        <button type="submit">Okay</button>
-    </form>
-    <form action="/review" method="post">
-        <input type="hidden" name = "multiplier" value = 2>
-        <button type="submit">Good</button>
-    </form>
-    <form action="/review" method="post">
-        <input type="hidden" name = "multiplier" value = 3>
-        <button type="submit">Easy</button>
-    </form>
+    <div>
+        <form class="nobr" action="/review" method="post">
+            <input type="hidden" name = "multiplier" value = 0>
+            <button type="submit" style="background-color: red;">None</button>
+        </form>
+        <form class="nobr" action="/review" method="post">
+            <input type="hidden" name = "multiplier" value = 0.05>
+            <button type="submit" style="background-color: orange;">Some</button>
+        </form>
+        <form class="nobr" action="/review" method="post">
+            <input type="hidden" name = "multiplier" value = 1>
+            <button type="submit" style="background-color: yellow;">Okay</button>
+        </form>
+    </div>
+    <div>
+        <form class="nobr" action="/review" method="post">
+            <input type="hidden" name = "multiplier" value = 2>
+            <button type="submit" style="background-color: greenyellow;">Good</button>
+        </form>
+        <form class="nobr" action="/review" method="post">
+            <input type="hidden" name = "multiplier" value = 3>
+            <button type="submit" style="background-color: green;">Easy</button>
+        </form>
+    </div>
     {% if session["state"] == "new" %}
     <form action="/review" method="post">
         <input type="hidden" name = "multiplier" value="known">
-        <button type="submit">Mark as Known</button>
+        <button type="submit" style="background-color: purple; color: white;">Mark as Known</button>
     </form>
     <form action="/review" method="post">
-        <input type="hidden" name = "multiplier" value="blacklist">
-        <button type="submit">Blacklist</button>
+        <input type="hidden" name = "multiplier" value="blacklisted">
+        <button type="submit" style="background-color: black; color: white;">Blacklist</button>
     </form>
     {% endif %}
 </div>
-<div>
+<div style="margin-top: 30px;">
     <form action="/new_alternate" method="get">
         <input type="hidden" name="route" value="review">
         <button type="submit">NEW ALTERNATE</button>
+    </form>
+</div>
+<div>
+    <form action="/choose_alternate" method="get">
+        <button type="submit">Choose ALTERNATE</button>
+    </form>
+</div>
+<div style="margin-top: 100px;">
+    <form action="/blacklist" method="post">
+    <input type="hidden" name="confirmed" value="1">
+    <input type="hidden" name="creator" value="{{ alternate.0.6 }}">
+    <button type="submit">BLACKLIST CREATOR</button>
     </form>
 </div>
 

@@ -116,18 +116,23 @@ def update():
         WHERE due < ? AND user_id = ? AND word_id IN 
         (SELECT id FROM words WHERE language = ?)"""
         , (float(session["datetime"]), session["user_id"], session["language"]))
-    temp = db.fetchall()[0][0]
-
-   
-    session[session["language"]]["review_count"] = temp
+    session[session["language"]]["review_count"] = db.fetchall()[0][0]
     session.modified = True
     
     if session[session["language"]]["review_count"] == 0:
         session[session["language"]]["review_count"] = 1
+        session[session["language"]]["reviewed"] = 1
+        session.modified = True
     
+    # update the number of cards seen today into database
     db.execute("""UPDATE users SET german_ns = ?, italian_ns = ?, spanish_ns = ?, finnish_ns = ?, french_ns = ? WHERE id = ?""", 
                (session["German"]["new_seen"], session["Italian"]["new_seen"], session["Spanish"]["new_seen"], session["Finnish"]["new_seen"], session["French"]["new_seen"], session["user_id"]))
 
+    db.execute ("""SELECT deck_id FROM users_to_decks WHERE user_id = ? AND position = 0""", (session["user_id"],))
+    try:
+        session["deck_id"]  = db.fetchall()[0][0]
+    except IndexError:
+        session["deck_id"] = ""
     db.execute("SELECT * FROM users WHERE id = ?", (session["user_id"],))
     settings = db.fetchall()[0]
     session["new_cards"] = int(settings[5])

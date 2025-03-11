@@ -19,7 +19,6 @@ mainpage
             <th>progress</th>
             <th>weighted progress</th>
             <th>size</th>
-            <th>public or private</th>
             <th>edit deck</th>
             <th>view contents</th>
             <th>change order</th>
@@ -38,14 +37,6 @@ mainpage
             <td>{{ row.12 }}</td>
             <td>{{ row.14 }}</td>
             <td>{{ row.7 }}</td>
-            <td>{{ row.9 }} 
-                {% if user == row.8 %}
-                <form action="/change_status" method="post">
-                    <input name="deck_id" type="hidden" value="{{ row.0 }}">
-                    <input name="state" type="hidden" value="{{ row.9 }}">
-                    <button type="submit">Change</button>
-                </form>
-                {% endif %}
             </td>
             <td>
                 <form action="edit_deck" method="post">
@@ -91,8 +82,10 @@ mainpage
             </td>
         </tr>
         {% endfor %}
-    </tbody>
-    
+    </tbody>    
 </table>
+<div>
+    This application allows you to input a text in one of the supported languages, and returns the list of distinct words to you as a flashcard deck. You can create your own reverses for these flashcards or use preexisting ones from other users.
+</div>
 
 {% endblock %}

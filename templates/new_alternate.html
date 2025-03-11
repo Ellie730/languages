@@ -2,7 +2,7 @@
 
 {% block title %}
 
-uncommon
+new_alternate
 
 {% endblock %}
 
@@ -13,20 +13,11 @@ uncommon
 <h3> {{word}}</h3>
 
 <form action="/new_alternate" method="post">
-    <div>
-        <input autofocus type="radio" id="common" name="common" value="common">
-        <label for="common">Common</label><br>
-        <input type="radio" id="common" name="common" value="uncommon">
-        <label for="uncommon">Uncommon</label><br>
-        <input type="radio" id="common" name="common" value="blacklisted">
-        <label for="blacklisted">BLACKLIST</label>
-
-    </div>
     <input type="text" name="definition" placeholder="definition">
     <input type="text" name="frequency" placeholder="frequency">
     <input type="text" name="example" placeholder="example">
     <input type="text" name="part" placeholder="part of speech">
-    {% if state == new %}
+    {% if session["state"] == 'new' %}
     <div>
         <input type="radio" name="interval" value="300" id="none">
         <label for="none">5 minutes</label>
@@ -40,6 +31,8 @@ uncommon
         <label for="easy">1 month</label>
         <input type="radio" name="interval" value="known" id="known">
         <label for="known">Known</label>
+        <input type="radio" name="interval" value="blacklist" id="blacklist">
+        <label for="blacklist">Blacklist</label>
     </div>
     {% endif %}
     <button type = "submit">Submit</button>
