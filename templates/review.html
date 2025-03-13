@@ -1,19 +1,73 @@
 {% extends "layout.html" %}
 
 {% block title %}
-    
-register
+
+show_card
 
 {% endblock %}
 
 {% block body %}
 
 <h2>
-    {{ card.word }}
+    {{card.0.15}}
 </h2>
-<form action="/show_card" method = "post">
-    <a href="/show_card"><button>Answer</button></a>
-</form>
+<button id="b" onclick="document.getElementById('reverse').style.display='block'" onclick="document.getElementById('b').style.display='hidden'">Show Card</button>
+<div id="reverse" style="display: none;">
+    <div>
+        {{alternate.0.2}}
+    </div>
+    <div>
+        {{alternate.0.4}}
+    </div>
+    <div>
+        {{alternate.0.5}}
+    </div>
+    <div >
+        <form action="/review" method="post" class="nobr">
+            <input type="hidden" name="multiplier" value="0" >
+            <input type="submit" value="None" style="background-color: red;">
+        </form>
+        <form action="/review" method="post" class="nobr">
+            <input type="hidden" name="multiplier" value="0.1">
+            <input type="submit" value="Some" style="background-color: orange;">
+        </form>
+        <form action="/review" method="post" class="nobr">
+            <input type="hidden" name="multiplier" value="1">
+            <input type="submit" value="Okay" style="background-color: yellow;">
+        </form>
+    </div> 
+    <div> 
+        <form action="/review" method="post" class="nobr">
+            <input type="hidden" name="multiplier" value="2" >
+            <input type="submit" value="Good" style="background-color: yellowgreen;">
+        </form>
+        <form action="/review" method="post" class="nobr">
+            <input type="hidden" name="multiplier" value="3">
+            <input type="submit" value="Easy" style="background-color: green;">
+        </form>
+    </div>
+    {% if card.0.10 == "new" %}
+    <div class="nobr">
+        <form action="/review" method="post" >
+            <input type="hidden" name="multiplier" value="known">
+            <input type="submit" value="Mark as Known" style="background-color: blueviolet;">
+        </form>
+        <form action="/review" method="post" >
+            <input type="hidden" name="multiplier" value="blacklisted">
+            <input type="submit" value="Blacklist word" style="background-color: black; color: white;">
+        </form>
+    </div>
+    {% endif %}
+    <div style="margin: auto;">
+        <a href="/new_alternate" style="margin-top: 30px;"><button> NEW ALTERNATE</button></a><br>
+        <a href="/choose_alternate" style="margin-top: 30px;"><button> CHOOSE ALTERNATE</button></a>
+    </div>
+    <form action="/blacklist" method="post" style="margin-top: 100px;">
+        <input name="creator" value="{{ alternate.0.6 }}" type="hidden">
+        <input name="confirmed" value="1" type="hidden">
+        <input type="submit" value="BLACKLIST CREATOR">
+    </form>
 
+</div>
 
 {% endblock %}

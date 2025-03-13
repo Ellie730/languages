@@ -1,0 +1,30 @@
+{% extends "layout.html" %}
+
+{% block title %}
+Blacklist
+{% endblock %}
+
+{% block body %}
+
+<table>
+    <thead>
+        <tr>
+            <th>creator</th>
+            <th>remove</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in blacklist %}
+        <tr>
+            <td>{{ item.1 }}</td>
+            <td>
+                <form action="/view_blacklist" method="post">
+                    <input type="hidden" value="{{ item.0 }}" name="creator">
+                    <input type="submit" value="submit">
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

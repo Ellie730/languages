@@ -7,7 +7,7 @@ mainpage
 {% block body %}
 
 <meta id="user_id" data-name="{{session[user_id]}}">
-<table>
+<table style="align-items: center;">
     <thead>
         <tr>
             <th>id</th>
@@ -19,7 +19,6 @@ mainpage
             <th>progress</th>
             <th>weighted progress</th>
             <th>size</th>
-            <th>public or private</th>
             <th>edit deck</th>
             <th>view contents</th>
         </tr>
@@ -27,7 +26,6 @@ mainpage
     <tbody>
         {% for row in display %}
         <tr>
-            <meta id="deck_id" data-id="{{row.0}}" data-state>
             <td>{{ row.0 }}</td>
             <td>{{ row.2 }}</td>
             <td>{{ row.3 }} </td>
@@ -36,16 +34,7 @@ mainpage
             <td>{{ row.6 }}</td>
             <td>{{ row.12 }}</td>
             <td>{{ row.14 }}</td>
-            <td>{{ row.7 }}</td>
-            <td>{{ row.9 }} 
-                {% if user == row.8 %}
-                <form action="/change_status" method="post">
-                    <input name="deck_id" type="hidden" value="{{ row.0 }}">
-                    <input name="state" type="hidden" value="{{ row.9 }}">
-                    <button type="submit">Change</button>
-                </form>
-                {% endif %}
-            </td>
+            <td>{{ row.15 }}</td>
             <td>
                 <form action="edit_deck" method="post">
                     <input name="deck_id" type="hidden" value="{{ row.0 }}">
@@ -59,23 +48,13 @@ mainpage
                 </form>     
             </td>
             </tr>
-            <script>
-                
-                function changeStatus() {
-                    var deck = $('#deck_id').data().value;
-                    $.ajax({
-                        url: "/change_status",
-                        type: "POST",
-                        data: { "deck_id":deck }
-
-                    })
-                }
-
-            </script>
+            
         </tr>
         {% endfor %}
     </tbody>
-    
 </table>
+<div style="margin-top: 50px;">
+    This application allows you to create flashcards from sample texts quickly and easily and review them with a spaced repetition algorithm
+</div>
 
 {% endblock %}

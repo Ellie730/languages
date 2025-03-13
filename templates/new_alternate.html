@@ -1,0 +1,40 @@
+{% extends "layout.html" %}
+
+{% block title %}
+
+New Alternate
+
+{% endblock %}
+
+{% block body %}
+
+<h2> Create custom card</h2>
+
+<h3> {{word}}</h3>
+
+<form action="/new_alternate" method="post">
+    
+    <input autocomplete="off" type="text" name="definition" placeholder="definition">
+    <input autocomplete="off" type="text" name="example" placeholder="example">
+    <input autocomplete="off" type="text" name="part" placeholder="part of speech">
+    
+    <div>
+        <input type="radio" id="600" name="interval" value="600">
+        <label for="600">10 minutes</label>
+        <input type="radio" id="900" name="interval" value="900">
+        <label for="900">15 minutes</label>
+        <input type="radio" id="86400" name="interval" value="86400">
+        <label for="86400">1 day</label>
+        <input type="radio" id="864000" name="interval" value="864000">
+        <label for="864000">10 days</label>
+        <input type="radio" id="2592000" name="interval" value="2592000">
+        <label for="2592000">1 month</label>
+        <input type="radio" id="known" name="interval" value="known">
+        <label for="known">Mark as Known</label><br>
+        <input type="radio" id="blacklisted" name="interval" value="blacklisted">
+        <label for="blacklisted">Blacklist</label><br>
+        <input type="submit" value="Submit">
+    </div>
+</form>
+
+{% endblock %}

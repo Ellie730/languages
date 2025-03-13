@@ -1,0 +1,18 @@
+{% extends "layout.html" %}
+
+{% block title %}
+Confirm Blacklist
+{% endblock %}
+
+{% block body %}
+
+<div>
+    Are you sure that you want to blacklist {{ creator }}, you already use {{ count }} cards from this user
+</div>
+<a href="/review"><button>Go Back</button></a>
+<form action="/blacklist" method="post">
+    <input name="confirmed" value="0" type="hidden">
+    <input type="submit" value="Confirm">
+</form>
+
+{% endblock %}

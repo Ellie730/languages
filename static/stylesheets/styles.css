@@ -1,0 +1,39 @@
+.nobr {
+    display:inline-block;
+}
+
+body    {
+    background-color: gray;
+    background-size: 100%;
+}
+
+button  {
+    border-radius: 8px;
+}
+
+.card{
+    border-color: black;
+    border-radius: 8px;
+}
+
+li {
+    padding: 10px;
+}
+
+table {
+    border-radius : 8px;
+    width: 100%;
+}
+
+thead {
+    background-color:rgb(88, 88, 88)
+}
+
+tr:nth-child(even) {
+    background-color: #d0d0d0;
+}
+
+th, td {
+    padding: 10px;
+    text-align: left;
+}

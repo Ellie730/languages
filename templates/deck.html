@@ -7,42 +7,40 @@ deck
 {% block body %}
 
 {% for card in cards %}
-
-<h3>{{card.word}}</h3>
-<div>
-    {{card.definition}}
+<div class="card">
+    <h3>{{card.2}}</h3>
+    <div>
+        {{card.18}}
+    </div>
+    <div>
+        {{card.21}}
+    </div>
+    <div>
+        {{card.19}}
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>easy</th>
+                <th>good</th>
+                <th>ok</th>
+                <th>some</th>
+                <th>none</th>
+                <th>total</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>{{ card.8 }}</td>
+                <td>{{ card.9 }}</td>
+                <td>{{ card.10 }}</td>
+                <td>{{ card.11 }}</td>
+                <td>{{ card.12 }}</td>
+                <td>{{ card.7 }}</td>
+            </tr>
+        </tbody>
+    </table>
 </div>
-<div>
-    {{card.example}}
-</div>
-<div>
-    {{card.part}}  {{card.common}}
-</div>
-<div>
-    due {{card.due}} last seen {{card.seen}}
-</div>
-<table>
-    <thead>
-        <tr>
-            <th>easy</th>
-            <th>good</th>
-            <th>ok</th>
-            <th>some</th>
-            <th>none</th>
-            <th>total</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr>
-            <td>{{ card.easy }}</td>
-            <td>{{ card.good }}</td>
-            <td>{{ card.okay }}</td>
-            <td>{{ card.some }}</td>
-            <td>{{ card.none }}</td>
-            <td>{{ card.viewings }}</td>
-        </tr>
-    </tbody>
-</table>
 {% endfor %}
 
 {% if page != 0 %}

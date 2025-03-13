@@ -5,7 +5,7 @@ from datetime import date, datetime
 from flask import redirect, render_template, session
 from functools import wraps
 
-languages = ["German", "Italian", "Spanish"]
+languages = ["Finnish", "French", "German", "Italian", "Spanish"]
 
 con = sqlite3.connect("languagecards.db", check_same_thread=False)
 db = con.cursor()
@@ -82,27 +82,35 @@ def presence(variable, vname):
 
 
 def update():
+
         #if new day reset new card counter
     db.execute ("SELECT time FROM users WHERE id = ?", (session["user_id"],))
-    try:
-        last = date(db.fetchall()[0][0])
-    except TypeError:
-        last = 0
-    
+    last = date.fromtimestamp(int(float(db.fetchall()[0][0])))
+
     session["datetime"] = datetime.now().timestamp()
-    if last != date.today():
+    today = date.today()
+    if last != today:
         for language in languages:
             session.update({f"{language}":{"new_seen":0, "reviewed":0}})
-        
+    session["zerror"] = True
+    if session["zerror"] ==  True:
+        session[session["language"]]["reviewed"] = 0
     #find the number of cards to review
+    db.execute("""UPDATE users SET time = ?, finnish_ns = ?, french_ns = ?, german_ns = ?, italian_ns = ?, spanish_ns = ? WHERE id = ?""",
+               (session["datetime"], session["Finnish"]["new_seen"], session["French"]["new_seen"], session["German"]["new_seen"], session["Italian"]["new_seen"], session["Spanish"]["new_seen"], session["user_id"]))
     db.execute("""SELECT COUNT (*) FROM user_progress
     WHERE due < ? AND user_id = ? AND word_id IN 
     (SELECT id FROM words WHERE language = ?)"""
     , (session["datetime"], session["user_id"], session["language"]))
-    session[session["language"]]["review_count"] = db.fetchall()
+    count = db.fetchall()[0][0]
+    if count>0:
+        session[session["language"]]["review_count"] = count
+        session["zerror"] = False
+    else:
+        session[session["language"]]["review_count"] = 1
+        session[session["language"]]["reviewed"] = 1
+        session["zerror"] = True
     db.execute("SELECT * FROM users WHERE id = ?", (session["user_id"],))
-    session["new_cards"] = db.fetchall()[0][5]
-    #update the time in the database
-    db.execute("""UPDATE users SET time = ? WHERE id = ?""", (session["datetime"], session["user_id"]))
+    session["new_cards"] = int(db.fetchall()[0][5])
     con.commit()
     

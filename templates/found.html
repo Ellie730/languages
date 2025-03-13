@@ -1,4 +1,4 @@
-{% extends "layout.html"}
+{% extends "layout.html" %}
 
 {% block title %}
 
@@ -7,16 +7,37 @@ found
 {% endblock %}
 
 {% block body %}
+<table>
+    <thead>
+        <tr>
+            <th>id</th>
+            <th>name</th>
+            <th>medium</th>
+            <th>genre</th>
+            <th>author</th>
+            <th>date</th>
+            <th>add deck</th>
+        </tr>
 
-{% for deck in matching %}
+    </thead>
+    <tbody>
+    {% for deck in matching %}
 
-<div>
-    {{deck.id}}
-    {{deck.name}}
-    {{deck.medium}}
-    {{deck.genre}}
-    {{deck.author}}
-    {{deck.date}}
-</div>
+        <tr>
+        <td>{{deck.0}}</td>
+        <td>{{deck.2}}</td>
+        <td>{{deck.5}}</td>
+        <td>{{deck.6}}</td>
+        <td>{{deck.3}}</td>
+        <td>{{deck.4}}</td>
+        <td>
+            <form action="/add_deck" method="post">
+                <input type="hidden" name="deck" value="{{deck.0}}">
+                <input type="submit" value="Add Deck">
+            </form>
+        </td>
+        </tr>
+
 
 {% endfor %}
+{% endblock %}
