@@ -290,8 +290,8 @@ def input():
                 # add the card to user_progress or update frequency
                 if word_id not in user_words:
                     db.execute ("""INSERT INTO user_progress 
-                    (user_id, word_id, viewings, easy, good, okay, some, none, state, frequency) VALUES
-                    (?,?,0,0,0,0,0,0,'new',?)""", (session["user_id"], word_id, contents[word]))
+                    (user_id, word_id, interval, viewings, easy, good, okay, some, none, state, frequency) VALUES
+                    (?,?,0,0,0,0,0,0,0,'new',?)""", (session["user_id"], word_id, contents[word]))
                 else:
                     db.execute("""SELECT frequency FROM user_progress WHERE user_id = ? AND word_id = ?""",
                     (session["user_id"], word_id))
@@ -838,3 +838,4 @@ def view_blacklist():
 def view_deck():
     session["deck_id"] = request.form.get("deck")
     return redirect ("/my_deck?page=0")
+

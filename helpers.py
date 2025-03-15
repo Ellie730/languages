@@ -95,48 +95,26 @@ def presence(variable, vname):
 
 
 def update():
-    
-    #if new day reset new card counter
+        #if new day reset new card counter
     db.execute ("SELECT time FROM users WHERE id = ?", (session["user_id"],))
-    data = int(float(db.fetchall()[0][0]))
-    last = date.fromtimestamp(data)
-
+    try:
+        last = date(db.fetchall()[0][0])
+    except TypeError:
+        last = 0
+    
     session["datetime"] = datetime.now().timestamp()
-    today = date.today()
-    if last != today:
-        db.execute("""UPDATE users SET time = ? WHERE id = ?""", (session["datetime"], session["user_id"]))
+    if last != date.today():
         for language in languages:
-            session[language]["new_seen"]=0
-            session.modified = True
-            session[language]["reviewed"]=0
-            session.modified = True
+            session.update({f"{language}":{"new_seen":0, "reviewed":0}})
         
     #find the number of cards to review
-    db.execute("""SELECT COUNT(*) FROM user_progress
-        WHERE due < ? AND user_id = ? AND word_id IN 
-        (SELECT id FROM words WHERE language = ?)"""
-        , (float(session["datetime"]), session["user_id"], session["language"]))
-    session[session["language"]]["review_count"] = db.fetchall()[0][0]
-    session.modified = True
-    
-    if session[session["language"]]["review_count"] == 0:
-        session[session["language"]]["review_count"] = 1
-        session[session["language"]]["reviewed"] = 1
-        session.modified = True
-    
-    # update the number of cards seen today into database
-    db.execute("""UPDATE users SET german_ns = ?, italian_ns = ?, spanish_ns = ?, finnish_ns = ?, french_ns = ? WHERE id = ?""", 
-               (session["German"]["new_seen"], session["Italian"]["new_seen"], session["Spanish"]["new_seen"], session["Finnish"]["new_seen"], session["French"]["new_seen"], session["user_id"]))
-
-    db.execute ("""SELECT deck_id FROM users_to_decks WHERE user_id = ? AND position = 0""", (session["user_id"],))
-    try:
-        session["deck_id"]  = db.fetchall()[0][0]
-    except IndexError:
-        session["deck_id"] = ""
+    db.execute("""SELECT COUNT (*) FROM user_progress
+    WHERE due < ? AND user_id = ? AND word_id IN 
+    (SELECT id FROM words WHERE language = ?)"""
+    , (session["datetime"], session["user_id"], session["language"]))
+    session[session["language"]]["review_count"] = db.fetchall()
     db.execute("SELECT * FROM users WHERE id = ?", (session["user_id"],))
-    settings = db.fetchall()[0]
-    session["new_cards"] = int(settings[5])
-    session["order"] = settings[4]
+    session["new_cards"] = db.fetchall()[0][5]
     #update the time in the database
     db.execute("""UPDATE users SET time = ? WHERE id = ?""", (session["datetime"], session["user_id"]))
     con.commit()
