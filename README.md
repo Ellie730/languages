@@ -12,8 +12,13 @@ pip install -r requirements.txt should install most dependencies
 
 If pip is having trouble with spacy, alternates such as conda may have more success.
 The language pipelines must be manually installed. The following commands may be used
+
 python -m spacy download fi_core_news_sm
+
 python -m spacy download fr_core_news_sm
+
 python -m spacy download de_core_news_sm
+
 python -m spacy download it_core_news_sm
+
 python -m spacy download es_core_news_sm
