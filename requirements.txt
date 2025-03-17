@@ -23,7 +23,7 @@ pyparsing==3.2.1
 Pyrebase==3.0.27
 Pyrebase4==4.8.0
 python-jwt==2.0.1
-requests==2.32.3
+requests==2.11.1
 requests-toolbelt==0.10.1
 rsa==4.9
 setuptools==75.8.0
