@@ -20,7 +20,6 @@ pyasn1==0.6.1
 pyasn1_modules==0.4.1
 pycryptodome==3.4.3
 pyparsing==3.2.1
-Pyrebase==3.0.27
 Pyrebase4==4.8.0
 python-jwt==2.0.1
 requests==2.11.1
