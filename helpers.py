@@ -100,7 +100,7 @@ def update():
             #if new day reset new card counter
         db.execute ("SELECT time FROM users WHERE id = ?", (session["user_id"],))
         try:
-            last = date(int(db.fetchall()[0][0]))
+            last = date.fromtimestamp(int(float(db.fetchall()[0][0])))
         except IndexError:
             last = 0
         
