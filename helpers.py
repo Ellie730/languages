@@ -95,44 +95,48 @@ def presence(variable, vname):
 
 
 def update():
-        #if new day reset new card counter
-    db.execute ("SELECT time FROM users WHERE id = ?", (session["user_id"],))
+
     try:
-        last = date(int(db.fetchall()[0][0]))
-    except IndexError:
-        last = 0
-    
-    session["datetime"] = datetime.now().timestamp()
-    if last != date.today():
-        for language in languages:
-            session.update({f"{language}":{"new_seen":0, "reviewed":0}})
+            #if new day reset new card counter
+        db.execute ("SELECT time FROM users WHERE id = ?", (session["user_id"],))
+        try:
+            last = date(int(db.fetchall()[0][0]))
+        except IndexError:
+            last = 0
         
-    #find the number of cards to review
-    db.execute("""SELECT COUNT (*) FROM user_progress
-    WHERE due < ? AND user_id = ? AND word_id IN 
-    (SELECT id FROM words WHERE language = ?)"""
-    , (session["datetime"], session["user_id"], session["language"]))
-    session[session["language"]]["review_count"] = db.fetchall()[0][0]
+        session["datetime"] = datetime.now().timestamp()
+        if last != date.today():
+            for language in languages:
+                session.update({f"{language}":{"new_seen":0, "reviewed":0}})
+            
+        #find the number of cards to review
+        db.execute("""SELECT COUNT (*) FROM user_progress
+        WHERE due < ? AND user_id = ? AND word_id IN 
+        (SELECT id FROM words WHERE language = ?)"""
+        , (session["datetime"], session["user_id"], session["language"]))
+        session[session["language"]]["review_count"] = db.fetchall()[0][0]
 
-    if session[session["language"]]["review_count"] == 0:
-        session[session["language"]]["review_count"] = 1
-        session[session["language"]]["reviewed"] = 1
-        session.modified = True
-    
-    #reset the session values from the database
-    db.execute("SELECT * FROM users WHERE id = ?", (session["user_id"],)) 
-    settings = db.fetchall()[0]
-    session["new_cards"] = int(settings[5])
-    session["order"] = settings[4]
+        if session[session["language"]]["review_count"] == 0:
+            session[session["language"]]["review_count"] = 1
+            session[session["language"]]["reviewed"] = 1
+            session.modified = True
+        
+        #reset the session values from the database
+        db.execute("SELECT * FROM users WHERE id = ?", (session["user_id"],)) 
+        settings = db.fetchall()[0]
+        session["new_cards"] = int(settings[5])
+        session["order"] = settings[4]
 
-    #update the time and daily reviewed cards in the database
-    db.execute("""UPDATE users SET time = ?, finnish_ns = ?, french_ns = ?, german_ns = ?, italian_ns = ?, spanish_ns = ? WHERE id = ?""", 
-               (session["datetime"], session["Finnish"]["review_count"], session["French"]["review_count"], session["German"]["review_count"], session["Italian"]["review_count"], session["Spanish"]["reviews_count"], session["user_id"]))
-    
-    #set session to the correct deck
-    db.execute ("""SELECT deck_id FROM users_to_decks WHERE user_id = ? AND position = 0""", (session["user_id"],))
-    try:
-        session["deck_id"]  = db.fetchall()[0][0]
+        #update the time and daily reviewed cards in the database
+        db.execute("""UPDATE users SET time = ?, finnish_ns = ?, french_ns = ?, german_ns = ?, italian_ns = ?, spanish_ns = ? WHERE id = ?""", 
+                (session["datetime"], session["Finnish"]["review_count"], session["French"]["review_count"], session["German"]["review_count"], session["Italian"]["review_count"], session["Spanish"]["reviews_count"], session["user_id"]))
+        
+        #set session to the correct deck
+        db.execute ("""SELECT deck_id FROM users_to_decks WHERE user_id = ? AND position = 0""", (session["user_id"],))
+        try:
+            session["deck_id"]  = db.fetchall()[0][0]
+        except IndexError:
+            session["deck_id"] = ""
+        con.commit()
     except IndexError:
-        session["deck_id"] = ""
-    con.commit()
+        return redirect("/logout")
