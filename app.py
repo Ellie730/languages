@@ -839,3 +839,9 @@ def view_deck():
     session["deck_id"] = request.form.get("deck")
     return redirect ("/my_deck?page=0")
 
+
+
+if __name__ == "__main__":
+    #app.run(host='0.0.0.0')
+    #We now use this syntax to server our app. 
+    app.run()

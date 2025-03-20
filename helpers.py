@@ -99,7 +99,7 @@ def update():
     db.execute ("SELECT time FROM users WHERE id = ?", (session["user_id"],))
     try:
         last = date(db.fetchall()[0][0])
-    except TypeError:
+    except IndexError:
         last = 0
     
     session["datetime"] = datetime.now().timestamp()
