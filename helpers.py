@@ -46,7 +46,7 @@ def lemmatise(text, language):
 
     if language == "French":
 
-        nlp = spacy.loag("fi_core_news_fr")
+        nlp = spacy.load("fr_core_news_sm")
 
     if language == "German":
 
