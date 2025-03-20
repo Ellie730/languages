@@ -127,7 +127,7 @@ def update():
 
     #update the time and daily reviewed cards in the database
     db.execute("""UPDATE users SET time = ?, finnish_ns = ?, french_ns = ?, german_ns = ?, italian_ns = ?, spanish_ns = ? WHERE id = ?""", 
-               (session["datetime"], session["Finnish"]["review_count"], session["French"]["review_count"], session["German"]["review_count"], session["Italian"]["review_count"], session["Spanish"]["reviews_count"]session["user_id"]))
+               (session["datetime"], session["Finnish"]["review_count"], session["French"]["review_count"], session["German"]["review_count"], session["Italian"]["review_count"], session["Spanish"]["reviews_count"], session["user_id"]))
     
     #set session to the correct deck
     db.execute ("""SELECT deck_id FROM users_to_decks WHERE user_id = ? AND position = 0""", (session["user_id"],))
