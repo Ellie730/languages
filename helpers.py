@@ -109,12 +109,13 @@ def update():
             for language in languages:
                 session.update({f"{language}":{"new_seen":0, "reviewed":0}})
             
-        #find the number of cards to review
-        db.execute("""SELECT COUNT (*) FROM user_progress
-        WHERE due < ? AND user_id = ? AND word_id IN 
-        (SELECT id FROM words WHERE language = ?)"""
-        , (session["datetime"], session["user_id"], session["language"]))
-        session[session["language"]]["review_count"] = db.fetchall()[0][0]
+                #find the number of cards to review
+                db.execute("""SELECT COUNT (*) FROM user_progress
+                WHERE due < ? AND user_id = ? AND word_id IN 
+                (SELECT id FROM words WHERE language = ?)"""
+                , (session["datetime"], session["user_id"], language))
+                session[language]["review_count"] = db.fetchall()[0][0]
+                session.modified = True
 
         if session[session["language"]]["review_count"] == 0:
             session[session["language"]]["review_count"] = 1
@@ -138,5 +139,5 @@ def update():
         except IndexError:
             session["deck_id"] = ""
         con.commit()
-    except IndexError:
+    except:
         return redirect("/logout")

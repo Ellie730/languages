@@ -360,6 +360,7 @@ def login():
         for language in languages:
 
             session[language] = {"new_seen":int(rows[0][i]), "review_count":0, "reviewed":0}
+            session.modified = True
             i += 1
 
 
