@@ -4,6 +4,8 @@ import sqlite3
 from datetime import date, datetime
 from flask import redirect, render_template, session
 from functools import wraps
+from nltk.corpus import wordnet
+from wordfreq import zipf_frequency
 
 languages = ["Finnish", "French", "German", "Italian", "Spanish"]
 
@@ -81,6 +83,34 @@ def login_required(f):
         return f(*args, **kwargs)
 
     return decorated_function
+
+
+
+def personalise_order():
+    
+    # 1) take the list of words from the database
+
+    wordlist = db.execute("""SELECT * FROM user_progress WHERE user_id = ?""")
+
+    # 2) for each word compare to french to find a probability that i already know it
+
+    for word in wordlist:
+
+        
+        similarity = 1
+
+
+        # 4) for each word find a frequency
+
+        frequency = zipf_frequency(word, frequency, 'fr')
+
+    # 5) apply formula to get a new position
+
+        priority = frequency / similarity
+
+    # 6) update the priority order
+
+
 
 
 

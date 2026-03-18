@@ -1,5 +1,9 @@
 import sqlite3
 
+from sympy import true
+import easyocr
+import magic
+
 from collections import Counter
 from datetime import datetime
 from flask import Flask, redirect, render_template, request, session
@@ -243,6 +247,16 @@ def input():
     if request.method == "POST":
         
         text = request.form.get("input")
+        if request.form.get("type") == "f":
+
+            # if an image is inputted then get words from it
+            ty = magic.from_buffer(open("file", "rb").read(2048))
+            if ty[:4] == "image":
+                reader = easyocr.Reader(['ch_sim', 'ch_tra', 'en', 'es', 'fi', 'fr', 'it', 'ja'])
+                text = reader.readtext(text)
+            # else read the text into a variable
+            else:
+                text = open(text).read()
 
         # lemmatise each word and get a list of words and their frequencies
         lemmatised = lemmatise(text, session["language"])

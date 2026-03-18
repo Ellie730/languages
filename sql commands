@@ -1,0 +1,55 @@
+CREATE TABLE history (user_id int,
+card_id int, 
+time int,
+score int,
+interval int
+);
+
+CREATE TABLE data (
+    user_id int,
+    card_id int,
+    difficulty int,
+    result int,
+    time0 int,
+    score0 int,
+    interval0 int,
+    time1 int,
+    score1 int,
+    interval1 int,
+    time2 int,
+    score2 int,
+    interval2 int,
+    time3 int,
+    score3 int,
+    interval3 int,
+    time4 int,
+    score4 int,
+    interval4 int,
+    time5 int,
+    score5 int,
+    interval5 int,
+    time5 int,
+    score5 int,
+    interval5 int,
+    time6 int,
+    score6 int,
+    interval6 int,
+    time7 int,
+    score7 int,
+    interval7 int,
+    time8 int,
+    score8 int,
+    interval8 int,
+    time9 int,
+    score9 int,
+    interval9 int,
+);
+
+ALTER TABLE user_progress DROP COLUMN viewings;
+ALTER TABLE user_progress DROP COLUMN easy;
+ALTER TABLE user_progress DROP COLUMN good;
+ALTER TABLE user_progress DROP COLUMN okay;
+ALTER TABLE user_progress DROP COLUMN some;
+ALTER TABLE user_progress DROP COLUMN none;
+ALTER TABLE user_progress ADD COLUMN difficulty;
+
