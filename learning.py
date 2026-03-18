@@ -11,7 +11,7 @@ db = con.cursor()
 # array 2 columns, set time (integer) and rating (integer 0-4), store everything in the database but only use the last 10 :D
 
 
-data = """SELECT * FROM data WHERE"""
+data = """SELECT * FROM data"""
 
 
 training_data = 
@@ -25,7 +25,7 @@ class NeuralNetwork(nn.Module):
         super().__init__()
         self.flatten = nn.Flatten()
         self.linear_relu_stack = nn.Sequential(
-            nn.Linear(23, 20),
+            nn.Linear(34, 20),
             nn.ReLU(),
             nn.Linear(20, 20),
             nn.ReLU(),

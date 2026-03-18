@@ -621,83 +621,34 @@ def review():
             con.commit()
             return redirect ("/review")
         
-        multiplier = float(route)
+        
+        
+            
+        #get an interval
 
-        #get the last interval
-        db.execute("""SELECT interval FROM user_progress WHERE user_id = ? AND word_id = ?""", 
-                   (session["user_id"], session["card"]))
-        interval = db.fetchall()[0][0]
+        interval = get_interval(session['user_id'], session['card'])
 
-        #if interval is longer than a day, do the maths
-        if interval >= 86400:
-            if multiplier > 0:
-                interval *= multiplier
+        #update user_progress
 
-            else:
-                interval = 600
+        db.execute("""UPDATE user_progress SET due = ?, interval = ?, WHERE user_id = ? AND word_id = ? """,
+                    (interval + int(datetime.now().timestamp()), interval, session["user_id"], session["card"]))
 
-            if multiplier != 0.05:
-                due = interval + session["datetime"]
-            else:
-                due = 900 + session["datetime"]
-
-        #if not, use the preset values for short periods
-        else: 
-            if multiplier == 0:
-                interval = 600
-            elif multiplier == 0.05:
-                interval = 43200
-            elif multiplier == 1:
-                interval = 86400
-            elif multiplier == 2:
-                interval = 345600
-            else:
-                interval = 846000
-            due =  interval + session["datetime"]
-
-        # update the database with this data
-        db.execute ("SELECT * FROM user_progress WHERE user_id = ? AND word_id = ?", (session["user_id"], session["card"]))
-        viewings = db.fetchall()[0]
-        db.execute("""UPDATE user_progress SET due = ?, interval = ?, viewings = ?
-        WHERE user_id = ? AND word_id = ?""", (due, interval, viewings[4] + 1, session["user_id"], session["card"]))
+        #Update history
+        db.execute("""INSERT INTO history (user_id, card_id, time, score, interval) VALUES(?,?,?,?,?)""",
+                    (session["user_id"], session["card"], int(datetime.now().timestamp()), route ,interval))
         con.commit()
+        #Update data, last one add result and create new entry
+        db.execute("""UPDATE data SET result = ? WHERE user_id = ? AND card_id = ? AND result = NULL""", 
+                    (route, session["user_id"], session["card"]))
+        con.commit()
+        db.execute("""INSERT INTO data (user_id, card_id, difficulty) VALUES(?,?,?)""", (session["user_id"], session["card"], difficulty))
 
-        #update the specific viewing category
-        if multiplier == 0:
-            db.execute("""UPDATE user_progress SET none = ? WHERE user_id = ? AND word_id = ?"""
-            , (viewings[9] + 1, session["user_id"], session["card"]))
-        elif multiplier == 0.05:
-            db.execute("""UPDATE user_progress SET some = ? WHERE user_id = ? AND word_id = ?"""
-            , (viewings[8] + 1, session["user_id"], session["card"]))
-        elif multiplier == 1:
-            db.execute("""UPDATE user_progress SET okay = ? WHERE user_id = ? AND word_id = ?"""
-            , (viewings[7] + 1, session["user_id"], session["card"]))
-        elif multiplier == 2:
-            db.execute("""UPDATE user_progress SET good = ? WHERE user_id = ? AND word_id = ?"""
-            , (viewings[6] + 1, session["user_id"], session["card"]))
-        else:
-            db.execute("""UPDATE user_progress SET easy = ? WHERE user_id = ? AND word_id = ?"""
-            , (viewings[5] + 1, session["user_id"], session["card"]))
-            con.commit()
-        
-        #if already seen, update state and the number of reviews
-        if session["state"] == "review":
-            if interval < 2500000:
-                db.execute ("""UPDATE user_progress SET state = 'learned' WHERE user_id = ? AND word_id = ?"""
-                , (session["user_id"], session["card"]))
-            else:
-                db.execute("""UPDATE user_progress SET state = 'learning' WHERE user_id = ? AND word_id = ?"""
-                , (session["user_id"], session["card"]))
-            session[session["language"]]["reviewed"] += 1
-            session.modified = True
-        
-        #if the card was new change state to learning, and count a new card seen
-        else:
-            db.execute("""UPDATE user_progress SET state = 'learning' WHERE user_id = ? AND word_id = ?"""
-            , (session["user_id"], session["card"]))
-            session[session["language"]]["new_seen"] +=1
-            session.modified = True
-        
+        history = db.execute("""SELECT time, score, interval FROM history WHERE user_id = ? AND card_id = ? ORDER BY time DESC LIMIT 10""", 
+                        (session["user_id"], session["card"]))
+        for i in range(10):
+            db.execute(f"""UPDATE data SET time{i}=?, score{i} = ? interval{i} = ? WHERE user_id = ? AND card_id = ? AND result = NULL""",
+                        (history[i][0], history[i][1], history[i][2]))
+            
         con.commit()
         return redirect ("/review")
 
